@@ -74,7 +74,7 @@ void connect_entry_with_bar(GtkWidget* entry, GtkWidget* bar){
 	w->w2 = bar;
 	g_signal_connect_swapped(entry, "insert-text", G_CALLBACK(print_on_entry), w);
 	g_signal_connect_swapped(entry, "delete-text", G_CALLBACK(print_on_entry), w);
-
+	free(w);
 }
 
 static void activate(GtkApplication* app, gpointer user_data){
