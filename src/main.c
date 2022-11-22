@@ -7,36 +7,46 @@ typedef struct{
 	GtkWidget* w2;
 } widgets_payload;
 
+typedef struct{
+	short does_contain_small_letters;
+	short does_contain_capital_letters;
+	short does_contain_digits;
+	short does_contain_other_character;
+	short has_8_characters_least;
+	short sum;
+} password_content;
+
 static bool is_value_in_range(int val, int min, int max){
 	return val >= min && val <= max;
 }
 
-static short int password_rating(const gchar* password){
-	int does_contain_small_letters = 0;
-	int does_contain_capital_letters = 0;
-	int does_contain_digits = 0;
-	int does_contain_other_character = 0;
-	int has_8_characters_least = (int)(strlen(password)>=8);
+static void rate_password(const gchar* password, password_content* pass_cont){
+	pass_cont->does_contain_small_letters = 0;
+	pass_cont->does_contain_capital_letters = 0;
+	pass_cont->does_contain_digits = 0;
+	pass_cont->does_contain_other_character = 0;
+	pass_cont->has_8_characters_least = (int)(strlen(password)>=8);
 	for(int i=0; i<strlen(password); i++){
 		char letter = password[i];
 		if(is_value_in_range(letter, 'a', 'z'))
-			does_contain_small_letters = 1;
+			pass_cont->does_contain_small_letters = 1;
 
 		else if(is_value_in_range(letter, 'A', 'Z'))
-			does_contain_capital_letters = 1;
+			pass_cont->does_contain_capital_letters = 1;
 
 		else if(is_value_in_range(letter, '0', '9'))
-			does_contain_digits = 1;
+			pass_cont->does_contain_digits = 1;
 
 		else
-			does_contain_other_character = 1;
+			pass_cont->does_contain_other_character = 1;
 	}
 
-	return	does_contain_small_letters+
-		does_contain_capital_letters+
-		does_contain_digits+
-		does_contain_other_character+
-		has_8_characters_least;
+	pass_cont->sum =
+		pass_cont->does_contain_small_letters+
+		pass_cont->does_contain_capital_letters+
+		pass_cont->does_contain_digits+
+		pass_cont->does_contain_other_character+
+		pass_cont->has_8_characters_least;
 }
 
 void print_on_entry(widgets_payload* data){
@@ -44,8 +54,11 @@ void print_on_entry(widgets_payload* data){
 	GtkWidget* bar = data->w2;
 	const gchar* text = gtk_entry_get_text(GTK_ENTRY(input));
 	printf("%s\n", text);
-	int rate = password_rating(text);
+	password_content* pass_cont = malloc(sizeof(password_content));
+	rate_password(text, pass_cont);
+	int rate = pass_cont->sum;
 	gtk_level_bar_set_value(GTK_LEVEL_BAR(bar), rate/5.);
+	free(pass_cont);
 }
 
 GtkWidget* create_window(GtkApplication* app){
