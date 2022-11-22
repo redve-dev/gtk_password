@@ -1,16 +1,51 @@
 #include <gtk/gtk.h>
+#include <string.h>
+#include <stdbool.h>
 
 typedef struct{
 	GtkWidget* w1;
 	GtkWidget* w2;
 } widgets_payload;
 
+static bool is_value_in_range(int val, int min, int max){
+	return val >= min && val <= max;
+}
+
+static short int password_rating(const gchar* password){
+	int does_contain_small_letters = 0;
+	int does_contain_capital_letters = 0;
+	int does_contain_digits = 0;
+	int does_contain_other_character = 0;
+	int has_8_characters_least = (int)(strlen(password)>=8);
+	for(int i=0; i<strlen(password); i++){
+		char letter = password[i];
+		if(is_value_in_range(letter, 'a', 'z'))
+			does_contain_small_letters = 1;
+
+		else if(is_value_in_range(letter, 'A', 'Z'))
+			does_contain_capital_letters = 1;
+
+		else if(is_value_in_range(letter, '0', '9'))
+			does_contain_digits = 1;
+
+		else
+			does_contain_other_character = 1;
+	}
+
+	return	does_contain_small_letters+
+		does_contain_capital_letters+
+		does_contain_digits+
+		does_contain_other_character+
+		has_8_characters_least;
+}
+
 void print_on_entry(widgets_payload* data){
 	GtkWidget* input = data->w1;
 	GtkWidget* bar = data->w2;
 	const gchar* text = gtk_entry_get_text(GTK_ENTRY(input));
 	printf("%s\n", text);
-	gtk_level_bar_set_value(GTK_LEVEL_BAR(bar), 4/8.);
+	int rate = password_rating(text);
+	gtk_level_bar_set_value(GTK_LEVEL_BAR(bar), rate/5.);
 }
 
 GtkWidget* create_window(GtkApplication* app){
