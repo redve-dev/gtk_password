@@ -28,16 +28,11 @@ static void rate_password(const gchar* password, password_content* pass_cont){
 	pass_cont->has_8_characters_least = (int)(strlen(password)>=8);
 	for(int i=0; i<strlen(password); i++){
 		char letter = password[i];
-		if(is_value_in_range(letter, 'a', 'z'))
-			pass_cont->does_contain_small_letters = 1;
-
-		else if(is_value_in_range(letter, 'A', 'Z'))
-			pass_cont->does_contain_capital_letters = 1;
-
-		else if(is_value_in_range(letter, '0', '9'))
-			pass_cont->does_contain_digits = 1;
-
-		else
+		pass_cont->does_contain_small_letters |= (int)(is_value_in_range(letter, 'a', 'z'));
+		pass_cont->does_contain_capital_letters |= (int)(is_value_in_range(letter, 'A', 'Z'));
+		pass_cont->does_contain_digits |= (int)(is_value_in_range(letter, '0', '9'));
+		// if none of the values above, then we have a special character
+		if( ! (is_value_in_range(letter, 'a', 'z') || is_value_in_range(letter, 'A', 'Z') || is_value_in_range(letter, '0', '9')))
 			pass_cont->does_contain_other_character = 1;
 	}
 
@@ -68,13 +63,15 @@ GtkWidget* create_window(GtkApplication* app){
 	return window;
 }
 
-void connect_entry_with_bar(GtkWidget* entry, GtkWidget* bar){
+void setup_widgets_on_grid(GtkWidget* grid){
 	widgets_payload* w = malloc(sizeof(widgets_payload));
-	w->w1 = entry;
-	w->w2 = bar;
-	g_signal_connect_swapped(entry, "insert-text", G_CALLBACK(print_on_entry), w);
-	g_signal_connect_swapped(entry, "delete-text", G_CALLBACK(print_on_entry), w);
-	free(w);
+	w->w1 = gtk_entry_new();
+	w->w2 = gtk_level_bar_new();
+	gtk_entry_set_visibility(GTK_ENTRY( w->w1 ), FALSE);
+	gtk_grid_attach( GTK_GRID(grid), w->w1, 0, 0, 1 ,1);
+	gtk_grid_attach(GTK_GRID(grid), w->w2, 0, 1, 1, 1);
+	g_signal_connect_swapped(w->w1, "insert-text", G_CALLBACK(print_on_entry), w);
+	g_signal_connect_swapped(w->w1, "delete-text", G_CALLBACK(print_on_entry), w);
 }
 
 static void activate(GtkApplication* app, gpointer user_data){
@@ -82,14 +79,7 @@ static void activate(GtkApplication* app, gpointer user_data){
 	GtkWidget* grid = gtk_grid_new();
 	gtk_container_add(GTK_CONTAINER(window), grid);
 
-	GtkWidget* input = 	gtk_entry_new();
-	gtk_entry_set_visibility(GTK_ENTRY( input ), FALSE);
-	gtk_grid_attach( GTK_GRID(grid), input, 0, 0, 1 ,1);
-
-	GtkWidget* bar = gtk_level_bar_new();
-	gtk_grid_attach(GTK_GRID(grid), bar, 0, 1, 1, 1);
-	connect_entry_with_bar(input, bar);
-
+	setup_widgets_on_grid(grid);
 	gtk_widget_show_all(window);
 }
 
