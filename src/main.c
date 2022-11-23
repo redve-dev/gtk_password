@@ -5,6 +5,7 @@
 typedef struct{
 	GtkWidget* w1;
 	GtkWidget* w2;
+	GtkWidget* w3;
 } widgets_payload;
 
 typedef struct{
@@ -44,15 +45,42 @@ static void rate_password(const gchar* password, password_content* pass_cont){
 		pass_cont->has_8_characters_least;
 }
 
+const gchar* create_warning_message(password_content* pass_cont){
+	char* buff = calloc(sizeof(char)*200, 1);
+	if(pass_cont->does_contain_other_character == 0){
+		strcat(&buff[strlen(buff)], "Your password does not contain other characters\n");
+	}
+	if(pass_cont->has_8_characters_least == 0){
+		strcat(&buff[strlen(buff)], "Your password is shorter than 8 characters\n");
+	}
+	if(pass_cont->does_contain_small_letters == 0){
+		strcat(&buff[strlen(buff)], "Your password does not contain small characters\n");
+	}
+	if(pass_cont->does_contain_capital_letters == 0){
+		strcat(&buff[strlen(buff)], "Your password does not contain capital letters\n");
+	}
+	if(pass_cont->does_contain_digits == 0){
+		strcat(&buff[strlen(buff)], "Your password does not contain digits\n");
+	}
+	const char* result = buff;
+	return result;
+
+}
+
+void set_warnings(GtkWidget* label, password_content* pass_cont){
+	const gchar* warnings=create_warning_message(pass_cont);
+	gtk_label_set_text(GTK_LABEL(label), warnings);
+}
+
 void print_on_entry(widgets_payload* data){
 	GtkWidget* input = data->w1;
 	GtkWidget* bar = data->w2;
+	GtkWidget* label = data->w3;
 	const gchar* text = gtk_entry_get_text(GTK_ENTRY(input));
-	printf("%s\n", text);
 	password_content* pass_cont = malloc(sizeof(password_content));
 	rate_password(text, pass_cont);
-	int rate = pass_cont->sum;
-	gtk_level_bar_set_value(GTK_LEVEL_BAR(bar), rate/5.);
+	set_warnings(label, pass_cont);
+	gtk_level_bar_set_value(GTK_LEVEL_BAR(bar), pass_cont->sum/5.);
 	free(pass_cont);
 }
 
@@ -67,9 +95,11 @@ void setup_widgets_on_grid(GtkWidget* grid){
 	widgets_payload* w = malloc(sizeof(widgets_payload));
 	w->w1 = gtk_entry_new();
 	w->w2 = gtk_level_bar_new();
+	w->w3 = gtk_label_new("dupa");
 	gtk_entry_set_visibility(GTK_ENTRY( w->w1 ), FALSE);
 	gtk_grid_attach( GTK_GRID(grid), w->w1, 0, 0, 1 ,1);
 	gtk_grid_attach(GTK_GRID(grid), w->w2, 0, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), w->w3, 1, 0, 1, 1);
 	g_signal_connect_swapped(w->w1, "insert-text", G_CALLBACK(print_on_entry), w);
 	g_signal_connect_swapped(w->w1, "delete-text", G_CALLBACK(print_on_entry), w);
 }
