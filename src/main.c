@@ -46,25 +46,19 @@ static void rate_password(const gchar* password, password_content* pass_cont){
 }
 
 const gchar* create_warning_message(password_content* pass_cont){
-	char* buff = calloc(sizeof(char)*200, 1);
-	if(pass_cont->does_contain_other_character == 0){
-		strcat(&buff[strlen(buff)], "Your password does not contain other characters\n");
-	}
-	if(pass_cont->has_8_characters_least == 0){
-		strcat(&buff[strlen(buff)], "Your password is shorter than 8 characters\n");
-	}
-	if(pass_cont->does_contain_small_letters == 0){
-		strcat(&buff[strlen(buff)], "Your password does not contain small characters\n");
-	}
-	if(pass_cont->does_contain_capital_letters == 0){
-		strcat(&buff[strlen(buff)], "Your password does not contain capital letters\n");
-	}
-	if(pass_cont->does_contain_digits == 0){
-		strcat(&buff[strlen(buff)], "Your password does not contain digits\n");
-	}
+	const char* has_other_chars = (pass_cont->does_contain_other_character == 0)? "Your password does not contain other characters\n" : "";
+	const char* has_8_chars = (pass_cont->has_8_characters_least == 0)? "Your password is shorter than 8 characters\n" : "";
+	const char* has_small_letters = (pass_cont->does_contain_small_letters == 0)? "Your password does not contain small characters\n" : "";
+	const char* has_capital_letters = (pass_cont->does_contain_capital_letters == 0)? "Your password does not contain capital letters\n" : "";
+	const char* has_digits = (pass_cont->does_contain_digits == 0)? "Your password does not contain digits\n" : "";
+	char* buff = calloc(300, 1);
+	strcat(buff, has_other_chars);
+	strcat(buff, has_8_chars);
+	strcat(buff, has_small_letters);
+	strcat(buff, has_digits);
+	strcat(buff, has_capital_letters);
 	const char* result = buff;
 	return result;
-
 }
 
 void set_warnings(GtkWidget* label, password_content* pass_cont){
