@@ -3,9 +3,9 @@
 #include <stdbool.h>
 
 typedef struct{
-	GtkWidget* w1;
-	GtkWidget* w2;
-	GtkWidget* w3;
+	GtkWidget* entry;
+	GtkWidget* level_bar;
+	GtkWidget* label;
 } widgets_group;
 
 typedef struct{
@@ -69,9 +69,9 @@ void set_warnings(GtkWidget* label, password_content* pass_cont){
 }
 
 void react_to_user_input(widgets_group* data){
-	GtkWidget* input = data->w1;
-	GtkWidget* bar = data->w2;
-	GtkWidget* label = data->w3;
+	GtkWidget* input = data->entry;
+	GtkWidget* bar = data->level_bar;
+	GtkWidget* label = data->label;
 	const gchar* text = gtk_entry_get_text(GTK_ENTRY(input));
 	password_content pass_cont;
 	get_password_rating(text, &pass_cont);
@@ -88,21 +88,21 @@ GtkWidget* create_window(GtkApplication* app){
 
 widgets_group* create_widgets_group(){
 	widgets_group* w = malloc(sizeof(widgets_group));
-	w->w1 = gtk_entry_new();
-	g_signal_connect_swapped(w->w1, "insert-text", G_CALLBACK(react_to_user_input), w);
-	g_signal_connect_swapped(w->w1, "delete-text", G_CALLBACK(react_to_user_input), w);
-	gtk_entry_set_visibility(GTK_ENTRY( w->w1 ), FALSE);
+	w->entry = gtk_entry_new();
+	g_signal_connect_swapped(w->entry, "insert-text", G_CALLBACK(react_to_user_input), w);
+	g_signal_connect_swapped(w->entry, "delete-text", G_CALLBACK(react_to_user_input), w);
+	gtk_entry_set_visibility(GTK_ENTRY( w->entry ), FALSE);
 
-	w->w2 = gtk_level_bar_new();
-	w->w3 = gtk_label_new("");
+	w->level_bar = gtk_level_bar_new();
+	w->label = gtk_label_new("");
 	return w;
 }
 
 void setup_widgets_on_grid(GtkWidget* grid){
 	widgets_group* w = create_widgets_group();
-	gtk_grid_attach( GTK_GRID(grid), w->w1, 0, 0, 1 ,1);
-	gtk_grid_attach(GTK_GRID(grid), w->w2, 0, 1, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), w->w3, 1, 0, 1, 1);
+	gtk_grid_attach( GTK_GRID(grid), w->entry, 0, 0, 1 ,1);
+	gtk_grid_attach(GTK_GRID(grid), w->level_bar, 0, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), w->label, 1, 0, 1, 1);
 }
 
 static void activate(GtkApplication* app, gpointer user_data){
