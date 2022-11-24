@@ -6,35 +6,37 @@ typedef struct{
 	GtkWidget* w1;
 	GtkWidget* w2;
 	GtkWidget* w3;
-} widgets_payload;
+} widgets_group;
 
 typedef struct{
-	short does_contain_small_letters;
-	short does_contain_capital_letters;
-	short does_contain_digits;
-	short does_contain_other_character;
-	short has_8_characters_least;
+	bool does_contain_small_letters;
+	bool does_contain_capital_letters;
+	bool does_contain_digits;
+	bool does_contain_other_character;
+	bool has_8_characters_least;
 	short sum;
 } password_content;
 
-static bool is_value_in_range(int val, int min, int max){
+bool is_value_in_range(int val, int min, int max){
 	return val >= min && val <= max;
 }
 
-static void rate_password(const gchar* password, password_content* pass_cont){
-	pass_cont->does_contain_small_letters = 0;
-	pass_cont->does_contain_capital_letters = 0;
-	pass_cont->does_contain_digits = 0;
-	pass_cont->does_contain_other_character = 0;
-	pass_cont->has_8_characters_least = (int)(strlen(password)>=8);
+void get_password_rating(const gchar* password, password_content* pass_cont){
+	pass_cont->does_contain_small_letters = false;
+	pass_cont->does_contain_capital_letters = false;
+	pass_cont->does_contain_digits = false;
+	pass_cont->does_contain_other_character = false;
+	pass_cont->has_8_characters_least = strlen(password)>=8;
 	for(int i=0; i<strlen(password); i++){
 		char letter = password[i];
-		pass_cont->does_contain_small_letters |= (int)(is_value_in_range(letter, 'a', 'z'));
-		pass_cont->does_contain_capital_letters |= (int)(is_value_in_range(letter, 'A', 'Z'));
-		pass_cont->does_contain_digits |= (int)(is_value_in_range(letter, '0', '9'));
-		// if none of the values above, then we have a special character
-		if( ! (is_value_in_range(letter, 'a', 'z') || is_value_in_range(letter, 'A', 'Z') || is_value_in_range(letter, '0', '9')))
-			pass_cont->does_contain_other_character = 1;
+		if (is_value_in_range(letter, 'a', 'z'))
+			pass_cont->does_contain_small_letters = true; 
+		else if (is_value_in_range(letter, 'A', 'Z'))
+			pass_cont->does_contain_capital_letters =true; 
+		else if (is_value_in_range(letter, '0', '9'))
+			pass_cont->does_contain_digits = true; 
+		else
+			pass_cont->does_contain_other_character = true;
 	}
 
 	pass_cont->sum =
@@ -45,20 +47,20 @@ static void rate_password(const gchar* password, password_content* pass_cont){
 		pass_cont->has_8_characters_least;
 }
 
-const gchar* create_warning_message(password_content* pass_cont){
-	const char* has_other_chars = (pass_cont->does_contain_other_character == 0)? "Your password does not contain other characters\n" : "";
-	const char* has_8_chars = (pass_cont->has_8_characters_least == 0)? "Your password is shorter than 8 characters\n" : "";
-	const char* has_small_letters = (pass_cont->does_contain_small_letters == 0)? "Your password does not contain small characters\n" : "";
-	const char* has_capital_letters = (pass_cont->does_contain_capital_letters == 0)? "Your password does not contain capital letters\n" : "";
-	const char* has_digits = (pass_cont->does_contain_digits == 0)? "Your password does not contain digits\n" : "";
+const char* create_warning_message(password_content* pass_cont){
 	char* buff = calloc(300, 1);
-	strcat(buff, has_other_chars);
-	strcat(buff, has_8_chars);
-	strcat(buff, has_small_letters);
-	strcat(buff, has_digits);
-	strcat(buff, has_capital_letters);
-	const char* result = buff;
-	return result;
+	if (!pass_cont->does_contain_other_character)
+		strcat(buff, "Your password does not contain other characters\n");
+	if (!pass_cont->has_8_characters_least)
+		strcat(buff, "Your password is shorter than 8 characters\n");
+	if (!pass_cont->does_contain_small_letters)
+		strcat(buff, "Your password does not contain small characters\n");
+	if (!pass_cont->does_contain_capital_letters)
+		strcat(buff, "Your password does not contain capital letters\n");
+	if (!pass_cont->does_contain_digits)
+		strcat(buff, "Your password does not contain digits\n");
+
+	return buff;
 }
 
 void set_warnings(GtkWidget* label, password_content* pass_cont){
@@ -66,16 +68,15 @@ void set_warnings(GtkWidget* label, password_content* pass_cont){
 	gtk_label_set_text(GTK_LABEL(label), warnings);
 }
 
-void react_to_user_input(widgets_payload* data){
+void react_to_user_input(widgets_group* data){
 	GtkWidget* input = data->w1;
 	GtkWidget* bar = data->w2;
 	GtkWidget* label = data->w3;
 	const gchar* text = gtk_entry_get_text(GTK_ENTRY(input));
-	password_content* pass_cont = malloc(sizeof(password_content));
-	rate_password(text, pass_cont);
-	set_warnings(label, pass_cont);
-	gtk_level_bar_set_value(GTK_LEVEL_BAR(bar), pass_cont->sum/5.);
-	free(pass_cont);
+	password_content pass_cont;
+	get_password_rating(text, &pass_cont);
+	set_warnings(label, &pass_cont);
+	gtk_level_bar_set_value(GTK_LEVEL_BAR(bar), pass_cont.sum/5.);
 }
 
 GtkWidget* create_window(GtkApplication* app){
@@ -85,17 +86,23 @@ GtkWidget* create_window(GtkApplication* app){
 	return window;
 }
 
-void setup_widgets_on_grid(GtkWidget* grid){
-	widgets_payload* w = malloc(sizeof(widgets_payload));
+widgets_group* create_widgets_group(){
+	widgets_group* w = malloc(sizeof(widgets_group));
 	w->w1 = gtk_entry_new();
+	g_signal_connect_swapped(w->w1, "insert-text", G_CALLBACK(react_to_user_input), w);
+	g_signal_connect_swapped(w->w1, "delete-text", G_CALLBACK(react_to_user_input), w);
+	gtk_entry_set_visibility(GTK_ENTRY( w->w1 ), FALSE);
+
 	w->w2 = gtk_level_bar_new();
 	w->w3 = gtk_label_new("");
-	gtk_entry_set_visibility(GTK_ENTRY( w->w1 ), FALSE);
+	return w;
+}
+
+void setup_widgets_on_grid(GtkWidget* grid){
+	widgets_group* w = create_widgets_group();
 	gtk_grid_attach( GTK_GRID(grid), w->w1, 0, 0, 1 ,1);
 	gtk_grid_attach(GTK_GRID(grid), w->w2, 0, 1, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), w->w3, 1, 0, 1, 1);
-	g_signal_connect_swapped(w->w1, "insert-text", G_CALLBACK(react_to_user_input), w);
-	g_signal_connect_swapped(w->w1, "delete-text", G_CALLBACK(react_to_user_input), w);
 }
 
 static void activate(GtkApplication* app, gpointer user_data){
