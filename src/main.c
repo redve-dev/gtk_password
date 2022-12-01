@@ -89,8 +89,7 @@ GtkWidget* create_window(GtkApplication* app){
 widgets_group* create_widgets_group(){
 	widgets_group* w = malloc(sizeof(widgets_group));
 	w->entry = gtk_entry_new();
-	g_signal_connect_swapped(w->entry, "insert-text", G_CALLBACK(react_to_user_input), w);
-	g_signal_connect_swapped(w->entry, "delete-text", G_CALLBACK(react_to_user_input), w);
+	g_signal_connect_swapped(w->entry, "changed", G_CALLBACK(react_to_user_input), w);
 	gtk_entry_set_visibility(GTK_ENTRY( w->entry ), FALSE);
 
 	w->level_bar = gtk_level_bar_new();
